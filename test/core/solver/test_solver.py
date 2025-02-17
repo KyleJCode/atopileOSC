@@ -611,24 +611,34 @@ def test_voltage_divider_find_v_in():
     assert solver.inspect_get_known_supersets(v_in) == Range(1.8, 200)
 
 
-def test_voltage_divider_find_resistances():
+def test_voltage_divider_find_resistances(Vin, Vout):
     r_top = Parameter(units=P.ohm)
     r_bottom = Parameter(units=P.ohm)
     v_in = Parameter(units=P.V)
     v_out = Parameter(units=P.V)
-    r_total = Parameter(units=P.ohm)
+    r_eq = Parameter(units=P.ohm)
+    
 
-    v_in.alias_is(Range(9 * P.V, 10 * P.V))
-    v_out.alias_is(Range(0.9 * P.V, 1 * P.V))
-    r_total.alias_is(Quantity_Interval_Disjoint.from_value(100 * P.ohm))
-    r_total.alias_is(r_top + r_bottom)
-    v_out.alias_is(v_in * r_bottom / (r_top + r_bottom))
+    v_in.alias_is(Vin)
+    v_out.alias_is(Vout)
 
-    solver = DefaultSolver()
-    # FIXME: this test looks funky
-    assert solver.inspect_get_known_supersets(v_out) == Range(0.9 * P.V, 1 * P.V)
+    ratio = (Vin-Vout)/Vout
 
-    # TODO: specify r_top (with tolerance), finish solving to find r_bottom
+    base_resistance = 10000 * P.ohm
+
+    r_bottom = base_resistance
+    r_top = base_resistance*ratio
+
+    r_bottom.alias_is(r_bottom)
+    r_top.alias_is(r_top)
+
+    # Voltage Divider Equation -> Vin = Vout(RW/(RW+RU))
+    # where RW = Resistor we have the voltage across (V) and RU = resistor we do not have the voltage across.
+
+    # Solving for the Resistances (given Voltage input and output), we find that RU/RW = (Vi-Vo)/Vo
+
+    # With this ratio, we can multiply both values by a standard 10k ohms to find a general resistor configuration that would 
+    # allow for Vin and Vout to work.
 
 
 def test_voltage_divider_find_r_top():
